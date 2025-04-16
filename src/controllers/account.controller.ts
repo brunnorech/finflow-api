@@ -10,6 +10,18 @@ export const getAccounts = async (_: Request, res: Response) => {
   }
 };
 
+export const getUserAccounts = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
+  const userId = req.userId;
+  const accounts = await prisma.account.findMany({
+    where: { userId },
+  });
+
+  res.json(accounts);
+};
+
 export const createAccount = async (req: Request, res: Response) => {
   try {
     const { name, type, userId } = req.body;

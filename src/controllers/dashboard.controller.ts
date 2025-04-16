@@ -3,9 +3,9 @@ import { prisma } from "../services/prisma";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export const getDashboard = async (req: Request, res: Response) => {
+export const getDashboard = async (req: Request & { userId: string }, res: Response) => {
   try {
-    const userId = req.userId!;
+    const userId = req.userId as any;
     const month = Number(req.query.month);
     const year = Number(req.query.year);
 
@@ -31,15 +31,14 @@ export const getDashboard = async (req: Request, res: Response) => {
       },
     });
 
-    // 2. Saldo total
     const total = await prisma.transaction.aggregate({
       _sum: { amount: true },
       where: {
         userId,
+        type: 'INCOME'
       },
     });
 
-    // 3. Resumo por mês (últimos 6)
     const monthlySummary = [];
 
     for (let i = 5; i >= 0; i--) {
@@ -73,7 +72,6 @@ export const getDashboard = async (req: Request, res: Response) => {
       });
     }
 
-    // 4. Despesas por categoria (mês atual)
     const groupedByCategory = await prisma.transaction.groupBy({
       by: ["categoryId"],
       where: {

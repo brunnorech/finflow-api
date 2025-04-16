@@ -20,6 +20,11 @@ enum TransactionType {
   EXPENSE
 }
 
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
 enum PaymentMethod {
   PIX
   CREDITO
@@ -41,17 +46,23 @@ model User {
 }
 
 model Account {
-  id       String      @id @default(uuid())
-  name     String
-  type     AccountType
-  user     User        @relation(fields: [userId], references: [id])
-  userId   String
+  id        String   @id @default(uuid())
+  name      String
+  type      AccountType
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
   transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
 }
 
 model Category {
   id       String      @id @default(uuid())
   name     String
+  type     CategoryType
   user     User        @relation(fields: [userId], references: [id])
   userId   String
   transactions Transaction[]

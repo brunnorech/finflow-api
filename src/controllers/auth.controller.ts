@@ -8,6 +8,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "segredo_forte";
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
 
+  console.log({ b: req.body }, 'enviei');
+
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser)

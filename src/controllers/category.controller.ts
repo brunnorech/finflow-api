@@ -1,22 +1,28 @@
 import { Request, Response } from "express";
 import { prisma } from "../services/prisma";
 
-export const getCategories = async (_: Request, res: Response) => {
-  try {
-    const categories = await prisma.category.findMany();
-    res.json(categories);
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar categorias", error });
-  }
+export const getUserCategories = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
+  const userId = req.userId;
+  const type = req.query.type as "INCOME" | "EXPENSE" | undefined;
+
+  const where: any = { userId };
+  if (type) where.type = type;
+
+  const categories = await prisma.category.findMany({ where });
+  res.json(categories);
 };
 
-export const createCategory = async (req: Request, res: Response) => {
+export const createCategory = async (req: Request & { userId: string }, res: Response) => {
   try {
-    const { name } = req.body;
-    const userId = req.userId!;
+    const { name, type } = req.body;
+    const userId = req.userId as any;
 
     const category = await prisma.category.create({
       data: {
+        type,
         name,
         userId,
       },

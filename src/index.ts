@@ -19,14 +19,14 @@ const rootHandler: RequestHandler = (_, res) => {
   res.json({ ok: true });
 };
 app.get("/", rootHandler);
+app.use("/categories", categoryRoutes);
 
 app.use("/transactions", transactionRoutes);
-app.use("/categories", categoryRoutes);
 app.use("/auth", authRoutes);
 
 app.use("/metadata", metadataRoutes);
 app.use("/dashboard", dashboardRoutes);
-app.use("/account", accountRoutes);
+app.use("/accounts", accountRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
