@@ -15,7 +15,10 @@ export const getUserCategories = async (
   res.json(categories);
 };
 
-export const createCategory = async (req: Request & { userId: string }, res: Response) => {
+export const createCategory = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
   try {
     const { name, type } = req.body;
     const userId = req.userId as any;
@@ -36,7 +39,11 @@ export const createCategory = async (req: Request & { userId: string }, res: Res
 
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const idParam = req.params.id;
+    const id = Array.isArray(idParam) ? idParam[0] : idParam;
+    if (!id) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
 
     await prisma.category.delete({
       where: { id },

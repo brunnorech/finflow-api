@@ -3,7 +3,10 @@ import { prisma } from "../services/prisma";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export const getDashboard = async (req: Request & { userId: string }, res: Response) => {
+export const getDashboard = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
   try {
     const userId = req.userId as any;
     const month = Number(req.query.month);
@@ -35,7 +38,7 @@ export const getDashboard = async (req: Request & { userId: string }, res: Respo
       _sum: { amount: true },
       where: {
         userId,
-        type: 'INCOME'
+        type: "INCOME",
       },
     });
 
@@ -85,15 +88,20 @@ export const getDashboard = async (req: Request & { userId: string }, res: Respo
     });
 
     const expensesByCategory = await Promise.all(
-      groupedByCategory.map(async (item) => {
-        const category = await prisma.category.findUnique({
-          where: { id: item.categoryId },
-        });
-        return {
-          name: category?.name || "Sem categoria",
-          value: item._sum.amount || 0,
-        };
-      })
+      groupedByCategory.map(
+        async (item: {
+          categoryId: string | null;
+          _sum: { amount: number | null };
+        }) => {
+          const category = await prisma.category.findUnique({
+            where: { id: item.categoryId },
+          });
+          return {
+            name: category?.name || "Sem categoria",
+            value: item._sum.amount || 0,
+          };
+        }
+      )
     );
 
     res.json({

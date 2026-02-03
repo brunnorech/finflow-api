@@ -43,7 +43,6 @@ export const createTransaction = async (
   }
 };
 
-
 export const getTransactions = async (
   req: AuthenticatedRequest,
   res: Response
@@ -90,9 +89,16 @@ export const getRecentTransactions = async (
   }
 };
 
-export const deleteTransaction = async (req: Request & { userId: string }, res: Response) => {
+export const deleteTransaction = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
   try {
-    const { id } = req.params;
+    const idParam = req.params.id;
+    const id = Array.isArray(idParam) ? idParam[0] : idParam;
+    if (!id) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
 
     await prisma.transaction.delete({
       where: { id },
@@ -102,4 +108,4 @@ export const deleteTransaction = async (req: Request & { userId: string }, res: 
   } catch (error) {
     res.status(500).json({ message: "Erro ao deletar transacao", error });
   }
-}
+};

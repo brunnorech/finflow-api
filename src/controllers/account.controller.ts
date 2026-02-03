@@ -42,7 +42,11 @@ export const createAccount = async (req: Request, res: Response) => {
 
 export const deleteAccount = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const idParam = req.params.id;
+    const id = Array.isArray(idParam) ? idParam[0] : idParam;
+    if (!id) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
 
     await prisma.account.delete({
       where: { id },
