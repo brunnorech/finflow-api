@@ -93,6 +93,9 @@ export const getDashboard = async (
           categoryId: string | null;
           _sum: { amount: number | null };
         }) => {
+          if (!item.categoryId) {
+            return { name: "Sem categoria", value: item._sum.amount || 0 };
+          }
           const category = await prisma.category.findUnique({
             where: { id: item.categoryId },
           });
