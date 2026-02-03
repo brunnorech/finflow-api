@@ -37,17 +37,54 @@ export const createCategory = async (
   }
 };
 
-export const deleteCategory = async (req: Request, res: Response) => {
+export const updateCategory = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
   try {
     const idParam = req.params.id;
     const id = Array.isArray(idParam) ? idParam[0] : idParam;
     if (!id) {
       return res.status(400).json({ message: "ID inválido" });
     }
+    const { name, type } = req.body;
+    const userId = req.userId;
 
-    await prisma.category.delete({
-      where: { id },
+    const category = await prisma.category.updateMany({
+      where: { id, userId },
+      data: { name, type },
     });
+
+    if (category.count === 0) {
+      return res.status(404).json({ message: "Categoria não encontrada" });
+    }
+
+    const updated = await prisma.category.findUnique({ where: { id } });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao atualizar categoria", error });
+  }
+};
+
+export const deleteCategory = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
+  try {
+    const idParam = req.params.id;
+    const id = Array.isArray(idParam) ? idParam[0] : idParam;
+    if (!id) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
+    const userId = req.userId;
+
+    const deleted = await prisma.category.deleteMany({
+      where: { id, userId },
+    });
+
+    if (deleted.count === 0) {
+      return res.status(404).json({ message: "Categoria não encontrada" });
+    }
 
     res.status(204).send();
   } catch (error) {

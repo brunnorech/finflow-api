@@ -22,9 +22,13 @@ export const getUserAccounts = async (
   res.json(accounts);
 };
 
-export const createAccount = async (req: Request, res: Response) => {
+export const createAccount = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
   try {
-    const { name, type, userId } = req.body;
+    const { name, type } = req.body;
+    const userId = req.userId;
 
     const account = await prisma.account.create({
       data: {
@@ -40,17 +44,54 @@ export const createAccount = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteAccount = async (req: Request, res: Response) => {
+export const updateAccount = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
   try {
     const idParam = req.params.id;
     const id = Array.isArray(idParam) ? idParam[0] : idParam;
     if (!id) {
       return res.status(400).json({ message: "ID inválido" });
     }
+    const { name, type } = req.body;
+    const userId = req.userId;
 
-    await prisma.account.delete({
-      where: { id },
+    const account = await prisma.account.updateMany({
+      where: { id, userId },
+      data: { name, type },
     });
+
+    if (account.count === 0) {
+      return res.status(404).json({ message: "Conta não encontrada" });
+    }
+
+    const updated = await prisma.account.findUnique({ where: { id } });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao atualizar conta", error });
+  }
+};
+
+export const deleteAccount = async (
+  req: Request & { userId: string },
+  res: Response
+) => {
+  try {
+    const idParam = req.params.id;
+    const id = Array.isArray(idParam) ? idParam[0] : idParam;
+    if (!id) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
+    const userId = req.userId;
+
+    const deleted = await prisma.account.deleteMany({
+      where: { id, userId },
+    });
+
+    if (deleted.count === 0) {
+      return res.status(404).json({ message: "Conta não encontrada" });
+    }
 
     res.status(204).send();
   } catch (error) {
