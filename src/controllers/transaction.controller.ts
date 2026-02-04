@@ -48,17 +48,87 @@ export const getTransactions = async (
   res: Response
 ) => {
   try {
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        userId: req.userId,
-      },
-      include: {
-        account: true,
-        category: true,
+    const userId = req.userId;
+
+    const pageParam = parseInt(req.query.page as string, 10);
+    const pageSizeParam = parseInt(req.query.pageSize as string, 10);
+
+    const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+    const pageSize =
+      Number.isNaN(pageSizeParam) || pageSizeParam < 1 || pageSizeParam > 100
+        ? 10
+        : pageSizeParam;
+
+    const rawType = (req.query.type as string | undefined)?.toUpperCase();
+    const search =
+      (req.query.search as string | undefined) ||
+      (req.query.q as string | undefined) ||
+      "";
+
+    const where: any = {
+      userId,
+    };
+
+    if (rawType === "INCOME" || rawType === "EXPENSE") {
+      where.type = rawType;
+    }
+
+    if (search) {
+      where.OR = [
+        {
+          description: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          account: {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          category: {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        },
+      ];
+    }
+
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        include: {
+          account: true,
+          category: true,
+        },
+        orderBy: {
+          date: "desc",
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.transaction.count({
+        where,
+      }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    res.json({
+      data: transactions,
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages,
       },
     });
-
-    res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: "Erro ao buscar transações", error });
   }
@@ -99,10 +169,15 @@ export const deleteTransaction = async (
     if (!id) {
       return res.status(400).json({ message: "ID inválido" });
     }
+    const userId = req.userId;
 
-    await prisma.transaction.delete({
-      where: { id },
+    const deleted = await prisma.transaction.deleteMany({
+      where: { id, userId },
     });
+
+    if (deleted.count === 0) {
+      return res.status(404).json({ message: "Transação não encontrada" });
+    }
 
     res.status(204).send();
   } catch (error) {
